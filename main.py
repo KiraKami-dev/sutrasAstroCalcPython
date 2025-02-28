@@ -1,58 +1,41 @@
 from fastapi import FastAPI
+from pydantic import BaseModel
 from kerykeion import AstrologicalSubject, Report, KerykeionChartSVG
 
 app = FastAPI()
 
-def generate_report():
-    akshat = AstrologicalSubject(
-        "Akshat", 2002, 9, 25, 0, 30, 
-        lng=72.8777, lat=19.0760, 
-        tz_str="Asia/Kolkata", city="Mumbai", 
+class BirthDetails(BaseModel):
+    name: str
+    year: int
+    month: int
+    day: int
+    hour: int
+    minute: int
+    lng: float
+    lat: float
+    tz_str: str
+    city: str
+
+@app.post("/astrology-report")
+def astrology_report(details: BirthDetails):
+    person = AstrologicalSubject(
+        details.name, details.year, details.month, details.day, 
+        details.hour, details.minute, lng=details.lng, lat=details.lat, 
+        tz_str=details.tz_str, city=details.city, 
         zodiac_type="Sidereal", sidereal_mode="LAHIRI"
     )
-    report = Report(akshat)
-    chart = KerykeionChartSVG(akshat)
+    report = Report(person)
+    chart = KerykeionChartSVG(person)
     
     return {
-      
-        "planets": {
-            "sun": vars(akshat.sun),
-            "moon": vars(akshat.moon),
-            "mercury": vars(akshat.mercury),
-            "venus": vars(akshat.venus),
-            "mars": vars(akshat.mars),
-            "jupiter": vars(akshat.jupiter),
-            "saturn": vars(akshat.saturn),
-            "uranus": vars(akshat.uranus),
-            "neptune": vars(akshat.neptune),
-            "pluto": vars(akshat.pluto),
-            "mean_node": vars(akshat.mean_node),
-            "true_node": vars(akshat.true_node),
-            "mean_south_node": vars(akshat.mean_south_node),
-            "true_south_node": vars(akshat.true_south_node),
-            "chiron": vars(akshat.chiron),
-            "mean_lilith": vars(akshat.mean_lilith),
-            "ascendant": vars(akshat.ascendant),
-            "descendant": vars(akshat.descendant),
-            "medium_coeli": vars(akshat.medium_coeli),
-            "imum_coeli": vars(akshat.imum_coeli)
-        },
-        "houses_positions": {
-            "first_house": vars(akshat.first_house),
-            "second_house": vars(akshat.second_house),
-            "third_house": vars(akshat.third_house),
-            "fourth_house": vars(akshat.fourth_house),
-            "fifth_house": vars(akshat.fifth_house),
-            "sixth_house": vars(akshat.sixth_house),
-            "seventh_house": vars(akshat.seventh_house),
-            "eighth_house": vars(akshat.eighth_house),
-            "ninth_house": vars(akshat.ninth_house),
-            "tenth_house": vars(akshat.tenth_house),
-            "eleventh_house": vars(akshat.eleventh_house),
-            "twelfth_house": vars(akshat.twelfth_house)
-        }
+        "planets": {planet: vars(getattr(person, planet)) for planet in [
+            "sun", "moon", "mercury", "venus", "mars", "jupiter", "saturn", 
+            "uranus", "neptune", "pluto", "mean_node", "true_node", 
+            "mean_south_node", "true_south_node", "chiron", "mean_lilith", 
+            "ascendant", "descendant", "medium_coeli", "imum_coeli"
+        ]},
+        "houses_positions": {f"{house}_house": vars(getattr(person, f"{house}_house")) for house in [
+            "first", "second", "third", "fourth", "fifth", "sixth", 
+            "seventh", "eighth", "ninth", "tenth", "eleventh", "twelfth"
+        ]}
     }
-
-@app.get("/astrology-report")
-def astrology_report():
-    return generate_report()
