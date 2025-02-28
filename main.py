@@ -3,6 +3,13 @@ from pydantic import BaseModel
 from kerykeion import AstrologicalSubject, Report, KerykeionChartSVG
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class BirthDetails(BaseModel):
     name: str
