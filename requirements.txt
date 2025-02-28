@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+kerykeion
+pytz
+svgwrite
+numpy
+pandas
+scipy
+timezonefinder
